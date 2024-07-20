@@ -13,6 +13,10 @@ class ServiceCreate(ServiceBase):
     pass
 
 
+class ServiceUpdate(ServiceBase):
+    pass
+
+
 class Service(ServiceBase):
     id: int
 

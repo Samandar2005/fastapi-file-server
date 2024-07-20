@@ -15,6 +15,10 @@ class ProjectCreate(ProjectBase):
     pass
 
 
+class ProjectUpdate(ProjectBase):
+    pass
+
+
 class Project(ProjectBase):
     id: int
 

@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Text, Date, DateTime, ForeignKey, Table
+from sqlalchemy import Column, Integer, String, Text, Date, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from .database import Base
+from datetime import datetime
+from tqqt.database import Base
 
 
 class News(Base):
@@ -22,15 +23,15 @@ class Groups(Base):
     updated_date = Column(DateTime)
 
 
-class Members(Base):
+class Member(Base):
     __tablename__ = "members"
     id = Column(Integer, primary_key=True, index=True)
     full_name = Column(String, index=True)
     image = Column(String)
     short_description = Column(Text)
     full_info_link = Column(String)
-    created_date = Column(DateTime)
-    updated_date = Column(DateTime)
+    created_date = Column(DateTime, default=datetime.utcnow)
+    updated_date = Column(DateTime, default=datetime.utcnow)
 
 
 class MemberInfo(Base):
@@ -43,7 +44,7 @@ class MemberInfo(Base):
     description = Column(Text)
     created_date = Column(DateTime)
     updated_date = Column(DateTime)
-    member = relationship("Members")
+    member = relationship("Member")
 
 
 class GroupMembers(Base):

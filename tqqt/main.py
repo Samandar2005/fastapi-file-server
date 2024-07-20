@@ -11,9 +11,9 @@ from .routers.service_groups import service_groups
 from .routers.services import services
 from .routers.group_services import group_services
 from . import root
+from fastapi import FastAPI
 
 app = FastAPI()
-
 
 app.include_router(root.router, prefix="", tags=["root"])
 app.include_router(news.router, prefix="/news", tags=["news"])

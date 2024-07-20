@@ -13,6 +13,10 @@ class NewsCreate(NewsBase):
     pass
 
 
+class NewsUpdate(NewsBase):
+    pass
+
+
 class News(NewsBase):
     id: int
     created_date: datetime

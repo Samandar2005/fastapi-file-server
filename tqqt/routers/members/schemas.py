@@ -21,5 +21,3 @@ class Member(MemberBase):
 
     class Config:
         orm_mode = True
-
-

@@ -11,6 +11,10 @@ class ServiceGroupCreate(ServiceGroupBase):
     pass
 
 
+class ServiceGroupUpdate(ServiceGroupBase):
+    pass
+
+
 class ServiceGroup(ServiceGroupBase):
     id: int
 

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
-from .schemas import Member, MemberCreate
+from .schemas import MemberCreate
 from datetime import datetime
+from tqqt.models import Member
 
 
 def get_member(db: Session, member_id: int):
