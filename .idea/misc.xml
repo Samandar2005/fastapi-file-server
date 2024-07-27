@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Black">
+<<<<<<< HEAD
     <option name="sdkName" value="Python 3.12 (fastapi_FileServer)" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (fastapi_FileServer)" project-jdk-type="Python SDK" />
+=======
+    <option name="sdkName" value="Python 3.12 (tqqt_project)" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (tqqt_project)" project-jdk-type="Python SDK" />
+>>>>>>> bb104c163d99063bd289b8050d957a9a5c5f0cd0
 </project>

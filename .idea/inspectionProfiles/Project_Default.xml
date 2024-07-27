@@ -45,9 +45,36 @@
     <inspection_tool class="HtmlExtraClosingTag" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="HtmlMissingClosingTag" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="HtmlUnknownAnchorTarget" enabled="true" level="WARNING" enabled_by_default="true" />
+<<<<<<< HEAD
     <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="HtmlUnknownBooleanAttribute" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="HtmlUnknownTag" enabled="true" level="WARNING" enabled_by_default="true" />
+=======
+    <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myValues">
+        <value>
+          <list size="0" />
+        </value>
+      </option>
+      <option name="myCustomValuesEnabled" value="true" />
+    </inspection_tool>
+    <inspection_tool class="HtmlUnknownBooleanAttribute" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="HtmlUnknownTag" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myValues">
+        <value>
+          <list size="6">
+            <item index="0" class="java.lang.String" itemvalue="nobr" />
+            <item index="1" class="java.lang.String" itemvalue="noembed" />
+            <item index="2" class="java.lang.String" itemvalue="comment" />
+            <item index="3" class="java.lang.String" itemvalue="noscript" />
+            <item index="4" class="java.lang.String" itemvalue="embed" />
+            <item index="5" class="java.lang.String" itemvalue="script" />
+          </list>
+        </value>
+      </option>
+      <option name="myCustomValuesEnabled" value="true" />
+    </inspection_tool>
+>>>>>>> bb104c163d99063bd289b8050d957a9a5c5f0cd0
     <inspection_tool class="HtmlUnknownTarget" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="HtmlWrongAttributeValue" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="IgnoreFileDuplicateEntry" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -106,7 +133,11 @@
     <inspection_tool class="PyInconsistentIndentationInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PyIncorrectDocstringInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
     <inspection_tool class="PyInitNewSignatureInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+<<<<<<< HEAD
     <inspection_tool class="PyInterpreterInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+=======
+    <inspection_tool class="PyInterpreterInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+>>>>>>> bb104c163d99063bd289b8050d957a9a5c5f0cd0
     <inspection_tool class="PyListCreationInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
     <inspection_tool class="PyMandatoryEncodingInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PyMethodFirstArgAssignmentInspection" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -252,7 +283,13 @@
     <inspection_tool class="RegExpSuspiciousBackref" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="RegExpUnexpectedAnchor" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="RegExpUnnecessaryNonCapturingGroup" enabled="true" level="WARNING" enabled_by_default="true" />
+<<<<<<< HEAD
     <inspection_tool class="RequiredAttributes" enabled="true" level="WARNING" enabled_by_default="true" />
+=======
+    <inspection_tool class="RequiredAttributes" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="myAdditionalRequiredHtmlAttributes" value="" />
+    </inspection_tool>
+>>>>>>> bb104c163d99063bd289b8050d957a9a5c5f0cd0
     <inspection_tool class="RestRoleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="ShellCheck" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="SpellCheckingInspection" enabled="true" level="TYPO" enabled_by_default="true">

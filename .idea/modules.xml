@@ -2,7 +2,11 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+<<<<<<< HEAD
       <module fileurl="file://$PROJECT_DIR$/.idea/fastapi_FileServer.iml" filepath="$PROJECT_DIR$/.idea/fastapi_FileServer.iml" />
+=======
+      <module fileurl="file://$PROJECT_DIR$/.idea/tqqt_project.iml" filepath="$PROJECT_DIR$/.idea/tqqt_project.iml" />
+>>>>>>> bb104c163d99063bd289b8050d957a9a5c5f0cd0
     </modules>
   </component>
 </project>
