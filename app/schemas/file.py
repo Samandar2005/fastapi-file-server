@@ -28,6 +28,5 @@ class File(BaseModel):
     size: int
     format: str
 
-
     class Config:
         orm_mode = True

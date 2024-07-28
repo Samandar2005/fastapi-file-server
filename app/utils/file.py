@@ -5,17 +5,6 @@ from datetime import datetime
 
 
 def save_file_to_disk(upload_folder: str, file_data: bytes, filename: str) -> Tuple[str, str]:
-    """
-    Save a file to disk with a unique name.
-
-    Args:
-        upload_folder (str): The folder to save the file.
-        file_data (bytes): The file data in bytes.
-        filename (str): The original file name.
-
-    Returns:
-        Tuple[str, str]: A tuple containing the unique name and file path.
-    """
     if not os.path.exists(upload_folder):
         os.makedirs(upload_folder)
 
@@ -29,13 +18,6 @@ def save_file_to_disk(upload_folder: str, file_data: bytes, filename: str) -> Tu
 
 
 def save_to_excel(file_data: dict, excel_path: str):
-    """
-    Save data to an Excel file. If the file already exists, append the data.
-
-    Args:
-        file_data (dict): The data to be saved.
-        excel_path (str): The path to the Excel file.
-    """
     new_data = pd.DataFrame([file_data])
 
     if not os.path.isfile(excel_path):
