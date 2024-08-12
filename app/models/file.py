@@ -1,20 +1,21 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
-from sqlalchemy.sql import func
-from app.database import Base
+from tortoise import fields
+from tortoise.models import Model
 
 
-class File(Base):
-    __tablename__ = "files"
+class File(Model):
+    id = fields.IntField(pk=True)
+    name = fields.CharField(max_length=255, index=True)
+    saved_name = fields.CharField(max_length=255, index=True)
+    path = fields.CharField(max_length=255)
+    date = fields.DatetimeField(auto_now_add=True)
+    hash_code = fields.CharField(max_length=255, index=True)
+    server = fields.CharField(max_length=255, index=True)
+    is_used_by_other_servers = fields.BooleanField(default=False)
+    shareable = fields.BooleanField(default=True)
+    public = fields.BooleanField(default=True)
+    size = fields.IntField()
+    format = fields.CharField(max_length=50)
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    saved_name = Column(String, index=True)
-    path = Column(String)
-    date = Column(DateTime(timezone=True), server_default=func.now())
-    hash_code = Column(String, index=True)
-    server = Column(String, index=True)
-    is_used_by_other_servers = Column(Boolean, default=False)
-    shareable = Column(Boolean, default=True)
-    public = Column(Boolean, default=True)
-    size = Column(Integer)
-    format = Column(String)
+    class Meta:
+        table = "files"
+        indexes = ["name", "saved_name", "hash_code", "server"]

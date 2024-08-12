@@ -1,19 +1,18 @@
-from sqlalchemy.orm import Session
+from tortoise.transactions import in_transaction
 from app.models.file import File
 from app.schemas.file import FileCreate
 import hashlib
 
 
-def get_file_by_hash(db: Session, hash_code: str):
-    return db.query(File).filter(File.hash_code == hash_code).first()
+async def get_file_by_hash(hash_code: str):
+    return await File.filter(hash_code=hash_code).first()
 
 
-def create_file(db: Session, file: FileCreate):
-    db_file = File(**file.dict())
-    db.add(db_file)
-    db.commit()
-    db.refresh(db_file)
-    return db_file
+async def create_file(file: FileCreate):
+    async with in_transaction() as connection:
+        db_file = File(**file.dict())
+        await db_file.save(using_db=connection)
+        return db_file
 
 
 def hash_file(file_data: bytes):

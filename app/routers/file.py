@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
 from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
-from app.database import get_db
-from app.crud import file as crud_file
+from tortoise.transactions import in_transaction
+from app.models.file import File as FileModel
 from app.schemas.file import FileCreate
 from app.utils.file import save_file_to_disk, save_to_excel
 import os
 import uuid
 from datetime import datetime
+import hashlib
+
 
 router = APIRouter()
 
@@ -19,13 +20,12 @@ DEFAULT_SERVER = "localhost"
 @router.post("/upload/")
 async def upload_file(
         file: UploadFile = File(...),
-        db: Session = Depends(get_db)
 ):
     try:
         file_data = await file.read()
-        hash_code = crud_file.hash_file(file_data)
+        hash_code = hash_file(file_data)
 
-        existing_file = crud_file.get_file_by_hash(db, hash_code)
+        existing_file = await FileModel.filter(hash_code=hash_code).first()
         if existing_file:
             duplicate_file_info = FileCreate(
                 name=file.filename,
@@ -38,7 +38,8 @@ async def upload_file(
                 size=len(file_data),
                 format=file.content_type
             )
-            crud_file.create_file(db, duplicate_file_info)
+            async with in_transaction() as connection:
+                await FileModel.create(**duplicate_file_info.dict(), using_db=connection)
             saved_date = existing_file.path.split(os.sep)[-2]
             return {
                 "message": "File already exists",
@@ -67,7 +68,8 @@ async def upload_file(
             format=file.content_type
         )
 
-        db_file = crud_file.create_file(db, file_info)
+        async with in_transaction() as connection:
+            db_file = await FileModel.create(**file_info.dict(), using_db=connection)
         save_to_excel(file_info.dict(), EXCEL_PATH)
 
         return {
@@ -85,3 +87,9 @@ async def get_file(date: str, filename: str):
         raise HTTPException(status_code=404, detail="File not found")
 
     return FileResponse(file_path)
+
+
+def hash_file(file_data: bytes):
+    hasher = hashlib.sha256()
+    hasher.update(file_data)
+    return hasher.hexdigest()
