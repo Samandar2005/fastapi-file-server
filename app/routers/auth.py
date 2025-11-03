@@ -11,7 +11,6 @@ class UserLogin(BaseModel):
 # Test uchun oddiy autentifikatsiya
 @router.post("/token")
 async def login(user: UserLogin):
-    # ESLATMA: Bu test uchun. Haqiqiy loyihada to'g'ri autentifikatsiya qo'shish kerak
     if user.username == "test" and user.password == "test":
         return {
             "access_token": create_access_token({"sub": user.username}),

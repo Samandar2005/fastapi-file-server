@@ -175,4 +175,96 @@ curl -O "http://127.0.0.1:8000/2025-10-30/20251030212602905303_db404bf2e8d24de9b
 
 Ushbu loyiha uchun litsenziya ko'rsatilmagan. Kerak bo'lsa `LICENSE` fayli qo'shing.
 
+---
+
+## Qo'shimcha muhim sozlamalar (yangilangan)
+
+Quyidagi sozlamalar loyiha ishga tushishi uchun muhim. Loyihaning ildizida `.env` fayl yarating va kerakli qiymatlarni kiriting.
+
+Masalan:
+
+```env
+# To'liq DB URL (Postgres yoki boshqa)
+DATABASE_URL=postgres://user:password@127.0.0.1/dbname
+
+# Redis (rate limiter uchun)
+REDIS_URL=redis://localhost:6379
+
+# JWT token yaratish uchun maxfiy kalit
+JWT_SECRET_KEY=change_this_to_a_strong_secret
+
+# Fernet kaliti (fayllarni shifrlash uchun)
+# PowerShell misol (kalit yarating va .env ga joylang):
+# python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+FERNET_KEY=<your_fernet_key_here>
+
+# TESTING=1 — test muhitida ilova 500 xatolariga traceback JSON qo'shadi (faqat testlar uchun)
+TESTING=1
+```
+
+Eslatma: agar `FERNET_KEY` ni bermasangiz, ilova ishga tushganda yangi kalit yaratadi; productionda kalitni doimiy saqlash zarur.
+
+## Testlar
+
+Qanday ishlatish:
+
+1. Virtual muhitni faollashtiring va dependencylarni o'rnating:
+
+```powershell
+env\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+2. Redis serverni ishga tushuring (mahalliy) yoki `REDIS_URL` ni moslab bering.
+
+3. Testlarni ishga tushirish:
+
+```powershell
+# Barcha testlar
+pytest -q
+
+# Yoki bitta testni -s bilan, tracebackni konsolga chiqarish uchun
+pytest tests/test_app.py::test_upload_with_token -q -s -vv
+```
+
+Eslatma: testlar Tortoise uchun in-memory sqlite ishlatadi va FastAPILimiter uchun Redis talabi mavjud.
+
+## Qo'shilgan xususiyatlar (qisqacha)
+
+- Fayl turlari va hajmi cheklovi (ALLOWED_EXTENSIONS va MAX_FILE_SIZE = 50MB)
+- Fayllarni diskga yozishdan avval Fernet bilan shifrlash
+- JWT token asosidagi autentifikatsiya (`/token` - test endpoint)
+- Redis asosidagi rate limiting (fastapi-limiter)
+- Testlar: `tests/test_app.py` (async httpx AsyncClient + tortoise in-memory DB)
+
+## Git — commit va push (PowerShell)
+
+Quyidagi buyruqlar sizning o'zgartirishlaringizni commit qilib remote ga yuboradi. Agar yangi branch ochmoqchi bo'lsangiz, `feature/tests` nomi misol.
+
+```powershell
+# Joriy o'zgartirishlarni tekshirish
+git status
+
+# (Ixtiyoriy) yangi branch yaratish va unga o'tish
+git checkout -b feature/tests
+
+# O'zgartirishlarni stage qilish
+git add -A
+
+# Commit qilish
+git commit -m "Add file validation, encryption, JWT auth, rate limiting and tests"
+
+# Remote ga push qilish (yangi branch uchun upstream bilan)
+git push -u origin feature/tests
+
+# Agar master branchda commit qilsangiz va bevosita master ga push qilmoqchi bo'lsangiz:
+git push origin master
+```
+
+PR tavsiyasi: master ga bevosita push qilishdan oldin branch yaratib, GitHub orqali Pull Request ochib ko'rib chiqishni tavsiya qilamiz.
+
+---
+
+Agar READMEda qo'shimcha o'zgartirish yoki tarjima kerak bo'lsa, qaysi bo'limga ko'proq detallar kerakligini ayting va men yangilayman.
+
 

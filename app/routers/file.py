@@ -11,6 +11,8 @@ import os
 import uuid
 from datetime import datetime
 import hashlib
+import traceback
+import os
 
 
 router = APIRouter()
@@ -86,6 +88,10 @@ async def upload_file(
             "url": f"/{current_date}/{saved_name}"
         }
     except Exception as e:
+        # During testing include the full traceback in the response to aid debugging
+        if os.environ.get("TESTING"):
+            tb = traceback.format_exc()
+            raise HTTPException(status_code=500, detail={"error": str(e), "traceback": tb})
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 

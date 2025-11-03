@@ -4,12 +4,16 @@ import os
 
 load_dotenv()
 
-DATABASE_USER = os.getenv("DATABASE_USER")
-DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
-DATABASE_NAME = os.getenv("DATABASE_NAME")
-DATABASE_HOST = os.getenv("DATABASE_HOST")
+# If we're running tests, use an in-memory SQLite DB to avoid external Postgres dependency
+if os.getenv("TESTING"):
+    DATABASE_URL = "sqlite://:memory:"
+else:
+    DATABASE_USER = os.getenv("DATABASE_USER")
+    DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
+    DATABASE_NAME = os.getenv("DATABASE_NAME")
+    DATABASE_HOST = os.getenv("DATABASE_HOST")
 
-DATABASE_URL = f"postgres://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_NAME}"
+    DATABASE_URL = f"postgres://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE_NAME}"
 
 TORTOISE_ORM = {
     "connections": {

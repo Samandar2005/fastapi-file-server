@@ -3,26 +3,49 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 import pytest
-from fastapi.testclient import TestClient
+import pytest_asyncio
 from httpx import AsyncClient
+import os
 from fastapi_limiter import FastAPILimiter
 from fastapi_limiter.depends import RateLimiter
 from redis import asyncio as aioredis
 from app.main import app
-import asyncio
 
-@pytest.fixture(autouse=True)
+import asyncio
+from tortoise import Tortoise
+
+
+@pytest_asyncio.fixture(autouse=True)
 async def setup_test_db():
+    os.environ["TESTING"] = "1"
     redis = await aioredis.from_url("redis://localhost", encoding="utf-8", decode_responses=True)
     await FastAPILimiter.init(redis)
+
+    # 🟢 Tortoise init & startup (in-memory sqlite for tests)
+    await Tortoise.init(
+        config={
+            "connections": {"default": "sqlite://:memory:"},
+            "apps": {
+                "models": {
+                    "models": ["app.models.file"],
+                    "default_connection": "default",
+                }
+            },
+        }
+    )
+    await Tortoise.generate_schemas()
+
     yield
-    await FastAPILimiter.reset()
+
+    # 🧹 Cleanup
+    await Tortoise.close_connections()
     await redis.close()
+    os.environ.pop("TESTING", None)
+
 import os
 import json
 from pathlib import Path
 
-client = TestClient(app)
 
 # Test ma'lumotlari
 TEST_USERNAME = "test"
@@ -30,54 +53,68 @@ TEST_PASSWORD = "test"
 TEST_FILE_CONTENT = b"Test file content"
 TEST_FILE_NAME = "test.txt"
 
-def get_test_token():
-    """Test uchun token olish"""
-    response = client.post(
-        "/token",
-        json={"username": TEST_USERNAME, "password": TEST_PASSWORD}
-    )
+async def get_test_token():
+    """Test uchun token olish (async)"""
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        response = await ac.post(
+            "/token",
+            json={"username": TEST_USERNAME, "password": TEST_PASSWORD}
+        )
     return response.json()["access_token"]
 
-def test_root():
+@pytest.mark.asyncio
+async def test_root():
     """Asosiy endpoint testi"""
-    response = client.get("/")
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        response = await ac.get("/")
     assert response.status_code == 200
     assert response.json()["message"] == "Project is working!"
 
-def test_login():
+@pytest.mark.asyncio
+async def test_login():
     """Login testi"""
-    # To'g'ri ma'lumotlar bilan
-    response = client.post(
-        "/token",
-        json={"username": TEST_USERNAME, "password": TEST_PASSWORD}
-    )
-    assert response.status_code == 200
-    assert "access_token" in response.json()
-    
-    # Noto'g'ri ma'lumotlar bilan
-    response = client.post(
-        "/token",
-        json={"username": "wrong", "password": "wrong"}
-    )
-    assert response.status_code == 401
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        # To'g'ri ma'lumotlar bilan
+        response = await ac.post(
+            "/token",
+            json={"username": TEST_USERNAME, "password": TEST_PASSWORD}
+        )
+        assert response.status_code == 200
+        assert "access_token" in response.json()
 
-def test_upload_without_token():
+        # Noto'g'ri ma'lumotlar bilan
+        response = await ac.post(
+            "/token",
+            json={"username": "wrong", "password": "wrong"}
+        )
+        assert response.status_code == 401
+
+@pytest.mark.asyncio
+async def test_upload_without_token():
     """Tokensiz fayl yuklash testi"""
     files = {"file": ("test.txt", TEST_FILE_CONTENT)}
-    response = client.post("/upload/", files=files)
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        response = await ac.post("/upload/", files=files)
     # FastAPI security xatosi 403 qaytaradi
     assert response.status_code in [401, 403]  # Both are acceptable for authentication errors
 
 @pytest.mark.asyncio
 async def test_upload_with_token():
     """Token bilan fayl yuklash testi"""
-    token = get_test_token()
+    token = await get_test_token()
     headers = {"Authorization": f"Bearer {token}"}
     
     async with AsyncClient(app=app, base_url="http://test") as ac:
         # Ruxsat etilgan fayl turi
         files = {"file": (TEST_FILE_NAME, TEST_FILE_CONTENT, "text/plain")}
         response = await ac.post("/upload/", headers=headers, files=files)
+        # If the server returned an error, print the body for debugging (contains traceback when TESTING=1)
+        if response.status_code != 200:
+            print("UPLOAD ERROR RESPONSE STATUS:", response.status_code)
+            try:
+                print("UPLOAD ERROR RESPONSE TEXT:", response.text)
+            except Exception:
+                print("(could not read response.text)")
         assert response.status_code == 200
         assert "url" in response.json()
         
@@ -95,7 +132,7 @@ async def test_upload_with_token():
 @pytest.mark.asyncio
 async def test_download_file():
     """Fayl yuklab olish testi"""
-    token = get_test_token()
+    token = await get_test_token()
     headers = {"Authorization": f"Bearer {token}"}
     
     # Avval faylni yuklash
@@ -117,7 +154,7 @@ async def test_download_file():
 @pytest.mark.asyncio
 async def test_rate_limiting():
     """Rate limiting testi"""
-    token = get_test_token()
+    token = await get_test_token()
     headers = {"Authorization": f"Bearer {token}"}
     files = {"file": (TEST_FILE_NAME, TEST_FILE_CONTENT, "text/plain")}
     
@@ -134,7 +171,7 @@ async def test_rate_limiting():
 @pytest.mark.asyncio
 async def test_duplicate_file():
     """Bir xil faylni qayta yuklash testi"""
-    token = get_test_token()
+    token = await get_test_token()
     headers = {"Authorization": f"Bearer {token}"}
     files = {"file": (TEST_FILE_NAME, TEST_FILE_CONTENT, "text/plain")}
     
@@ -156,7 +193,7 @@ async def test_duplicate_file():
 @pytest.mark.asyncio
 async def test_file_size_limit():
     """Fayl hajmi cheklovi testi"""
-    token = get_test_token()
+    token = await get_test_token()
     headers = {"Authorization": f"Bearer {token}"}
     
     # 51MB hajmli fayl (limit: 50MB)
@@ -168,7 +205,8 @@ async def test_file_size_limit():
         assert response.status_code == 400
         assert "File size too large" in response.json()["detail"]
 
-def test_cleanup():
+@pytest.mark.asyncio
+async def test_cleanup():
     """Test fayllarini tozalash"""
     uploaded_files_dir = Path("app/uploaded_files")
     if uploaded_files_dir.exists():
