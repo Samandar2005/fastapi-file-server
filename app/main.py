@@ -1,24 +1,37 @@
 from fastapi import FastAPI
 from app.database import init, close_db_connection
 from tortoise.contrib.fastapi import register_tortoise
-from app.routers import file
+from app.routers import file, auth
 from fastapi.responses import JSONResponse
+from redis import asyncio as aioredis
+import fastapi_limiter
+from fastapi_limiter.depends import RateLimiter
 
 from app.database import TORTOISE_ORM
 
 app = FastAPI()
 
 
-@app.on_event("startup")
-async def startup_event():
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
     await init()
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
+    redis = aioredis.from_url("redis://localhost", encoding="utf-8", decode_responses=True)
+    await fastapi_limiter.FastAPILimiter.init(redis)
+    
+    yield
+    
+    # Shutdown
     await close_db_connection()
+    await redis.close()
+    await fastapi_limiter.FastAPILimiter.reset()
+
+app = FastAPI(lifespan=lifespan)
 
 
+app.include_router(auth.router)
 app.include_router(file.router)
 
 

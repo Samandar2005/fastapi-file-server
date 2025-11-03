@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from tortoise.transactions import in_transaction
 from app.models.file import File as FileModel
 from app.schemas.file import FileCreate
-from app.utils.file import save_file_to_disk, save_to_excel
+from app.utils.file import save_file_to_disk, save_to_excel, validate_file, ALLOWED_EXTENSIONS
+from app.utils.security import verify_token, decrypt_file
+import fastapi_limiter
+from fastapi_limiter.depends import RateLimiter
 import os
 import uuid
 from datetime import datetime
@@ -20,9 +23,15 @@ DEFAULT_SERVER = "localhost"
 @router.post("/upload/")
 async def upload_file(
         file: UploadFile = File(...),
+        token: dict = Depends(verify_token),
+        rate_limiter: None = Depends(RateLimiter(times=10, seconds=60))  # 10 requests per minute
 ):
     try:
         file_data = await file.read()
+        
+        # Fayl turini va hajmini tekshirish
+        validate_file(file.content_type, len(file_data))
+        
         hash_code = hash_file(file_data)
 
         existing_file = await FileModel.filter(hash_code=hash_code).first()
@@ -81,12 +90,34 @@ async def upload_file(
 
 
 @router.get("/{date}/{filename}")
-async def get_file(date: str, filename: str):
+async def get_file(
+    date: str, 
+    filename: str,
+    token: dict = Depends(verify_token),
+    rate_limiter: None = Depends(RateLimiter(times=30, seconds=60))  # 30 requests per minute
+):
     file_path = os.path.join(UPLOAD_FOLDER, date, filename)
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
 
-    return FileResponse(file_path)
+    # Faylni o'qish va decrypt qilish
+    with open(file_path, "rb") as f:
+        encrypted_data = f.read()
+    
+    decrypted_data = decrypt_file(encrypted_data)
+    
+    def iterfile():
+        yield decrypted_data
+
+    # Fayl turini aniqlash
+    file_extension = filename.split('.')[-1].lower()
+    content_type = next((mime for ext, mime in ALLOWED_EXTENSIONS.items() if ext == file_extension), 'application/octet-stream')
+    
+    return StreamingResponse(
+        iterfile(),
+        media_type=content_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
 
 def hash_file(file_data: bytes):

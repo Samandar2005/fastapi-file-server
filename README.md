@@ -1,8 +1,29 @@
 ## FastAPI File Server
 
-Minimal fayl saqlash xizmati: fayllarni yuklash, diskda saqlash (kunlik papkalar bo'yicha), SHA-256 orqali dublikatlarni aniqlash, Tortoise ORM bilan Postgres bazasida yozuvlarni yuritish va `app/file_records.xlsx` faylida tarixni log qilish.
+Xavfsiz va cheklangan fayl saqlash xizmati: fayllarni yuklash, diskda shifrlab saqlash, autentifikatsiya va rate limiting bilan himoyalash, kunlik papkalar bo'yicha saqlash, SHA-256 orqali dublikatlarni aniqlash, Tortoise ORM bilan Postgres bazasida yozuvlarni yuritish va `app/file_records.xlsx` faylida tarixni log qilish.
 
 ### Xususiyatlar
+
+#### Yangi qo'shilgan xususiyatlar (2025-11-03)
+
+1. **Fayl formatlari cheklovi**
+   - Ruxsat etilgan fayl turlari:
+     - txt (text/plain)
+     - pdf (application/pdf)
+     - png (image/png)
+     - jpg/jpeg (image/jpeg)
+     - doc (application/msword)
+     - docx (application/vnd.openxmlformats-officedocument.wordprocessingml.document)
+   - Maksimal fayl hajmi: 50MB
+
+2. **Xavfsizlik qo'shimchalari**
+   - Fayllarni shifrlash (Fernet encryption)
+   - JWT token asosida autentifikatsiya
+   - Rate limiting:
+     - Yuklash: 10 ta so'rov/minutiga
+     - Yuklab olish: 30 ta so'rov/minutiga
+
+#### Asosiy xususiyatlar
 - **/upload/** orqali fayl yuklash (`multipart/form-data`)
 - **Dublikatlarni aniqlash**: fayl hash (SHA-256) bo'yicha
 - **Kunlik kataloglar**: `app/uploaded_files/YYYY-MM-DD/`
@@ -28,7 +49,19 @@ python -m venv env
 env\Scripts\activate
 ```
 
-2) Kutubxonalarni o'rnatish:
+2) Redis o'rnatish (Rate limiting uchun):
+
+Windows uchun:
+- Redis serverni yuklab oling: https://github.com/microsoftarchive/redis/releases
+- O'rnatish va ishga tushirish
+
+Linux uchun:
+```bash
+sudo apt-get install redis-server
+sudo service redis-server start
+```
+
+3) Kutubxonalarni o'rnatish:
 
 ```bash
 pip install -r requirements.txt
