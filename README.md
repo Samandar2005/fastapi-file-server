@@ -23,6 +23,12 @@ Xavfsiz va cheklangan fayl saqlash xizmati: fayllarni yuklash, diskda shifrlab s
      - Yuklash: 10 ta so'rov/minutiga
      - Yuklab olish: 30 ta so'rov/minutiga
 
+3. **Fayllarni boshqarish API endpointlari** ✨ YANGI
+   - `GET /files` - Pagination, filtering va sorting bilan fayllar ro'yxati
+   - `GET /files/{id}` - ID bo'yicha fayl ma'lumotlari
+   - `PUT /files/{id}` - Fayl metadata yangilash (name, shareable, public)
+   - `DELETE /files/{id}` - Faylni o'chirish (fizik fayl va DB yozuvi)
+
 #### Asosiy xususiyatlar
 - **/upload/** orqali fayl yuklash (`multipart/form-data`)
 - **Dublikatlarni aniqlash**: fayl hash (SHA-256) bo'yicha
@@ -108,28 +114,109 @@ OpenAPI hujjatlari: `http://127.0.0.1:8000/docs`
 
 ## API
 
+### Autentifikatsiya
+
+- `POST /token` – JWT token olish
+  - Body: `{ "username": "test", "password": "test" }`
+  - Response: `{ "access_token": "...", "token_type": "bearer" }`
+
+**Eslatma:** Barcha endpointlar JWT token talab qiladi. Header: `Authorization: Bearer <token>`
+
+### Asosiy endpointlar
+
 - `GET /` – Sog'liq tekshiruvi. `{ "message": "Project is working!" }` qaytaradi.
 
 - `POST /upload/` – Fayl yuklash
   - Body: `multipart/form-data` (kalit: `file`)
   - Muvaffaqiyat: `{ "message": "File uploaded successfully", "url": "/YYYY-MM-DD/<saved_name>" }`
   - Agar dublikat bo'lsa: `{ "message": "File already exists", "url": "/YYYY-MM-DD/<saved_name>" }`
+  - Rate limit: 10 so'rov/minut
 
 - `GET /{date}/{filename}` – Faylni yuklab olish
   - `date` formati: `YYYY-MM-DD`
-  - `filename`: saqlangan nom (`app/utils/file.py` uni vaqt prefiksi bilan yaratadi)
+  - `filename`: saqlangan nom
+  - Rate limit: 30 so'rov/minut
+
+### Fayllarni boshqarish endpointlari ✨ YANGI
+
+- `GET /files` – Fayllar ro'yxati (pagination, filtering, sorting)
+  - **Query parametrlar:**
+    - `page` (default: 1) - Sahifa raqami
+    - `page_size` (default: 10, max: 100) - Sahifadagi elementlar soni
+    - `search` - Fayl nomi bo'yicha qidiruv
+    - `format` - Fayl formati bo'yicha filter (masalan: "text/plain")
+    - `shareable` - Shareable bo'yicha filter (true/false)
+    - `public` - Public bo'yicha filter (true/false)
+    - `sort_by` - Sorting maydoni (date, name, size, format)
+    - `sort_order` - Sorting tartibi (asc, desc)
+  - Response: 
+    ```json
+    {
+      "items": [...],
+      "total": 100,
+      "page": 1,
+      "page_size": 10,
+      "total_pages": 10
+    }
+    ```
+  - Rate limit: 30 so'rov/minut
+
+- `GET /files/{file_id}` – Fayl ma'lumotlarini olish
+  - Response: Fayl barcha ma'lumotlari va URL
+  - Rate limit: 30 so'rov/minut
+
+- `PUT /files/{file_id}` – Fayl metadata yangilash
+  - Body: `{ "name": "Yangi nom.txt", "shareable": true, "public": false }`
+  - Yangilash mumkin bo'lgan maydonlar: `name`, `shareable`, `public`
+  - Rate limit: 20 so'rov/minut
+
+- `DELETE /files/{file_id}` – Faylni o'chirish
+  - Fizik fayl va DB yozuvini o'chiradi
+  - Response: `{ "message": "File deleted successfully", "file_id": 1 }`
+  - Rate limit: 10 so'rov/minut
 
 ### cURL namunalar
 
 ```bash
-# Fayl yuklash
+# 1. Token olish
+curl -X POST "http://127.0.0.1:8000/token" \
+  -H "Content-Type: application/json" \
+  -d '{"username": "test", "password": "test"}'
+
+# Token olishdan keyin (TOKEN o'rniga yuklab olingan tokenni qo'ying)
+TOKEN="your_token_here"
+
+# 2. Fayl yuklash
 curl -X POST "http://127.0.0.1:8000/upload/" \
-  -H "accept: application/json" \
-  -H "Content-Type: multipart/form-data" \
+  -H "Authorization: Bearer $TOKEN" \
   -F "file=@path/to/local/file.png"
 
-# Yuklangan faylni olish
-curl -O "http://127.0.0.1:8000/2025-10-30/20251030212602905303_db404bf2e8d24de9b6dacbf3b9ec41e0"
+# 3. Fayllar ro'yxatini olish (pagination bilan)
+curl -X GET "http://127.0.0.1:8000/files?page=1&page_size=20&sort_by=date&sort_order=desc" \
+  -H "Authorization: Bearer $TOKEN"
+
+# 4. Qidiruv bilan fayllar ro'yxati
+curl -X GET "http://127.0.0.1:8000/files?search=test&format=text/plain" \
+  -H "Authorization: Bearer $TOKEN"
+
+# 5. Fayl ma'lumotlarini olish
+curl -X GET "http://127.0.0.1:8000/files/1" \
+  -H "Authorization: Bearer $TOKEN"
+
+# 6. Fayl metadata yangilash
+curl -X PUT "http://127.0.0.1:8000/files/1" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Yangi nom.txt", "public": false}'
+
+# 7. Faylni o'chirish
+curl -X DELETE "http://127.0.0.1:8000/files/1" \
+  -H "Authorization: Bearer $TOKEN"
+
+# 8. Yuklangan faylni yuklab olish
+curl -X GET "http://127.0.0.1:8000/2025-10-30/20251030212602905303_db404bf2e8d24de9b6dacbf3b9ec41e0" \
+  -H "Authorization: Bearer $TOKEN" \
+  -o downloaded_file
 ```
 
 ---
@@ -139,9 +226,12 @@ curl -O "http://127.0.0.1:8000/2025-10-30/20251030212602905303_db404bf2e8d24de9b
 - `app/main.py` – FastAPI ilovasi, routerlarni ulash, Tortoise ro'yxatdan o'tkazish
 - `app/database.py` – Tortoise ORM sozlamalari va ulanish hayoti
 - `app/models/file.py` – `files` jadvali modeli
-- `app/schemas/file.py` – Pydantic sxemalari
-- `app/routers/file.py` – Yuklash va faylni qaytarish endpointlari
+- `app/schemas/file.py` – Pydantic sxemalari (FileCreate, FileUpdate, FileResponse, PaginationParams, va h.k.)
+- `app/routers/file.py` – Barcha file endpointlari (yuklash, yuklab olish, boshqarish)
+- `app/routers/auth.py` – Autentifikatsiya endpointlari (token olish)
+- `app/crud/file.py` – Database CRUD operatsiyalari (get_files, get_file_by_id, update_file, delete_file)
 - `app/utils/file.py` – Diskka saqlash hamda Excel log funksiyalari
+- `app/utils/security.py` – JWT token va fayl shifrlash funksiyalari
 - `app/uploaded_files/` – Fayllar saqlanadigan papka (kun bo'yicha)
 - `app/file_records.xlsx` – Yozuvlar Excel logi
 
@@ -235,6 +325,8 @@ Eslatma: testlar Tortoise uchun in-memory sqlite ishlatadi va FastAPILimiter uch
 - Fayllarni diskga yozishdan avval Fernet bilan shifrlash
 - JWT token asosidagi autentifikatsiya (`/token` - test endpoint)
 - Redis asosidagi rate limiting (fastapi-limiter)
+- Fayllarni boshqarish API (GET /files, GET /files/{id}, PUT /files/{id}, DELETE /files/{id})
+- Pagination, filtering va sorting qo'llab-quvvatlash
 - Testlar: `tests/test_app.py` (async httpx AsyncClient + tortoise in-memory DB)
 
 ## Git — commit va push (PowerShell)
