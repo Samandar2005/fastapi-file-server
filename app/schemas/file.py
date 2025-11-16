@@ -37,7 +37,6 @@ class File(BaseModel):
     format: str
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
@@ -56,7 +55,6 @@ class FileResponse(BaseModel):
     url: str  # Fayl URL'i
 
     class Config:
-        orm_mode = True
         from_attributes = True
 
 
