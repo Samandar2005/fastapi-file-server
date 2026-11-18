@@ -1,5 +1,10 @@
 ## FastAPI File Server
 
+## Overview in English
+
+A FastAPI file storage API with JWT authentication, Fernet encryption, Redis rate limiting, and hash-based deduplication.
+
+
 Xavfsiz va cheklangan fayl saqlash xizmati: fayllarni yuklash, diskda shifrlab saqlash, autentifikatsiya va rate limiting bilan himoyalash, kunlik papkalar bo'yicha saqlash, SHA-256 orqali dublikatlarni aniqlash, Tortoise ORM bilan Postgres bazasida yozuvlarni yuritish va `app/file_records.xlsx` faylida tarixni log qilish.
 
 ### Xususiyatlar
